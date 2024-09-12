@@ -1,0 +1,26 @@
+[1.121s] Invoking command in '/home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote': PYTHONPATH=/home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote/prefix_override:/home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py develop --editable --build-directory /home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote/build --no-deps install_data
+[1.577s] running develop
+[1.814s] running egg_info
+[1.815s] creating meu_primeiro_pacote.egg-info
+[1.816s] writing meu_primeiro_pacote.egg-info/PKG-INFO
+[1.817s] writing dependency_links to meu_primeiro_pacote.egg-info/dependency_links.txt
+[1.818s] writing entry points to meu_primeiro_pacote.egg-info/entry_points.txt
+[1.818s] writing requirements to meu_primeiro_pacote.egg-info/requires.txt
+[1.819s] writing top-level names to meu_primeiro_pacote.egg-info/top_level.txt
+[1.820s] writing manifest file 'meu_primeiro_pacote.egg-info/SOURCES.txt'
+[1.821s] reading manifest file 'meu_primeiro_pacote.egg-info/SOURCES.txt'
+[1.822s] writing manifest file 'meu_primeiro_pacote.egg-info/SOURCES.txt'
+[1.823s] running build_ext
+[1.824s] Creating /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/lib/python3.10/site-packages/meu-primeiro-pacote.egg-link (link to .)
+[1.824s] Installing meu_primeiro_no script to /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/lib/meu_primeiro_pacote
+[1.825s] 
+[1.826s] Installed /home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote
+[1.827s] running install_data
+[1.827s] creating /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/ament_index
+[1.828s] creating /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/ament_index/resource_index
+[1.828s] creating /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/ament_index/resource_index/packages
+[1.829s] copying resource/meu_primeiro_pacote -> /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/ament_index/resource_index/packages
+[1.830s] copying package.xml -> /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/meu_primeiro_pacote
+[1.830s] creating /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/meu_primeiro_pacote/launch
+[1.831s] copying launch/meu_primeiro_launch.py -> /home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/share/meu_primeiro_pacote/launch
+[1.862s] Invoked command in '/home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote' returned '0': PYTHONPATH=/home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote/prefix_override:/home/robot/ws_aprendendo_ros2/src/install/meu_primeiro_pacote/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py develop --editable --build-directory /home/robot/ws_aprendendo_ros2/src/build/meu_primeiro_pacote/build --no-deps install_data

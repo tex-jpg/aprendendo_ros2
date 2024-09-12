@@ -1,0 +1,4 @@
+[console_scripts]
+meu_segundo_no = meu_segundo_pacote.meu_segundo_no:main
+meu_terceiro_no = meu_segundo_pacote.meu_terceiro_no:main
+
