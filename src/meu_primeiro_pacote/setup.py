@@ -26,7 +26,8 @@ setup(
             'no_com_classe = meu_primeiro_pacote.no_com_classe:main',
             'talker = meu_primeiro_pacote.talker:main',
             'listener = meu_primeiro_pacote.listener:main',
-            'r2d2 = meu_primeiro_pacote.r2d2:main'
+            'r2d2 = meu_primeiro_pacote.r2d2:main',
+            'r2d2_controle = meu_primeiro_pacote.r2d2_controle:main'
 
         ],
     },

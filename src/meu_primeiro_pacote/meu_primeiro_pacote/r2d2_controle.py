@@ -46,6 +46,8 @@ class R2D2(Node):
         rclpy.spin_once(self)
 
         self.get_logger().info ('Entrando no loop princial do nó.')
+        integral=0.0
+
         while(rclpy.ok):
             rclpy.spin_once(self)
             distancia_objetivo = 2
@@ -54,8 +56,9 @@ class R2D2(Node):
             p_gain = 0.1
             i_gain = 0.00
             d_gain = 0.01 
-            integral = 0.0
+            
             def parede():
+                integral=0.0
                 error = distancia_objetivo - distancia_direita
                 integral = integral + error 
                 old_error = error   
@@ -66,6 +69,7 @@ class R2D2(Node):
                 cmd.angular.z = power
                 self.pub_cmd_vel.publish(cmd)
             def virar():
+                integral=0.0
                 error = distancia_objetivo - distancia_direita
                 integral = integral + error 
                 old_error = error   
@@ -80,7 +84,7 @@ class R2D2(Node):
                 self.get_logger().info ('vira')
             else:
                 parede()
-                self.get_logger().info ('paredeee')
+                
         self.get_logger().info ('Ordenando o robô: "parar"')
         self.pub_cmd_vel.publish(self.parar)
         rclpy.spin_once(self)
