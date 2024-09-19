@@ -1,5 +1,9 @@
 import rclpy
-import numpy 
+import numpy
+import tf_transformations
+import time
+import math
+from math import *
 from rclpy.node import Node
 
 from sensor_msgs.msg import LaserScan
@@ -27,13 +31,31 @@ class R2D2(Node):
         self.get_logger().debug ('Definindo o publisher de controle do robo: "/cmd_Vel"')
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
+        self.maq_estado = 0
+        self.espera(0.5)
+        self.dist = 0.0
+        self.dist_robo = 0.0
+        self.angulo_robo = 0.0
+    
+    def distancia_ate_99(self):
+        objective = [9,9]
+        self.dist = math.dist((self.pose.position.x, self.pose.position.y), objective) 
+        self.angulo_robo = math.atan2(9 - self.pose.position.x, 9 - self.pose.position.y)
+
+    def espera(self, max_seconds):
+        start = time.time()
+        count = 0
+        while count < max_seconds:
+            count = time.time() - start            
+            rclpy.spin_once(self)
+
     def listener_callback_laser(self, msg):
         self.laser = msg.ranges
        
     def listener_callback_odom(self, msg):
         self.pose = msg.pose.pose
+
     def run(self):
-         
         self.get_logger().debug ('Executando uma iteração do loop de processamento de mensagens.')
         rclpy.spin_once(self)
 
@@ -46,45 +68,73 @@ class R2D2(Node):
         rclpy.spin_once(self)
 
         self.get_logger().info ('Entrando no loop princial do nó.')
-        integral=0.0
-
         while(rclpy.ok):
-            rclpy.spin_once(self)
-            distancia_objetivo = 2
-            distancia_direita = numpy.mean(self.laser[0:10])
-            distancia_frente = numpy.mean(self.laser[80:100])
-            p_gain = 0.1
-            i_gain = 0.00
-            d_gain = 0.01 
             
-            def parede():
-                integral=0.0
-                error = distancia_objetivo - distancia_direita
-                integral = integral + error 
-                old_error = error   
-                dif_erro = error - old_error
-                power = p_gain*error + i_gain*integral + d_gain*dif_erro
-                cmd = Twist()
-                cmd.linear.x = 0.5
-                cmd.angular.z = power
-                self.pub_cmd_vel.publish(cmd)
-            def virar():
-                integral=0.0
-                error = distancia_objetivo - distancia_direita
-                integral = integral + error 
-                old_error = error   
-                dif_erro = error - old_error
-                power = p_gain*error + i_gain*integral + d_gain*dif_erro
-                cmd = Twist()
-                cmd.linear.x = power
-                cmd.angular.z = 0.5
-                self.pub_cmd_vel.publish(cmd)
-            if (distancia_frente<distancia_objetivo):
-                virar()
-                self.get_logger().info ('vira')
-            else:
-                parede()
+            self.pose.orientation #orientação
+            self.pose.position #posição
+            _, _, yaw = tf_transformations.euler_from_quaternion([self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z, self.pose.orientation.w]) #aqui so precisa usar o yaw
+        
+            rclpy.spin_once(self)
+
+            self.get_logger().debug ('dist. laser')
+            distancia_direita = numpy.array(self.laser[0:10]).mean()
+            self.distancia_direita   = min((self.laser[  0: 80])) # -90 a -10 
+            self.distancia_frente    = min((self.laser[ 80:100])) # -10 a  10 
+            self.distancia_esquerda  = min((self.laser[100:180])) #  10 a  90 
+            
+            cmd = Twist()
+            self.erro_ang = self.angulo_robo - yaw
+            self.distancia_ate_99()
+            
+
+            if self.maq_estado == 0:
+                if(abs(self.erro_ang) >= 0.06):
+                    cmd.angular.z = 0.4
+                    self.pub_cmd_vel.publish(cmd)
+                    self.get_logger().info ('virando para o 9,9')
+                elif( self.dist <= 3 and abs(self.erro_ang) <= 0.06):
+                    self.maq_estado = 2                
+                else:
+                    cmd.angular.z = 0.0
+                    self.pub_cmd_vel.publish(cmd)
+                    self.get_logger().info ('dist=' + str(self.dist) + 'dist_robo=' + str(self.pose.position.x)+ str(self.pose.position.y))
+                    #print(self.dist, self.distancia_frente)
+                    self.maq_estado = 1
+        
+            elif self.maq_estado == 1: #sem caixas a vista, reto
+                if(self.distancia_frente > self.distancia_direita and self.distancia_frente > self.distancia_esquerda and self.distancia_frente > 1):
+                    self.get_logger().info ('nada na frente')
+                    self.maq_estado = 2
+                elif(self.distancia_esquerda > self.distancia_direita and self.distancia_esquerda > self.distancia_frente ):
+                    cmd.angular.z = 0.5
+                    self.get_logger().info ('caixa na frente, virando a esquerda')
+                    self.pub_cmd_vel.publish(cmd)
+                elif(self.distancia_direita > self.distancia_frente and self.distancia_direita > self.distancia_esquerda ):
+                    cmd.angular.z = -0.5
+                    self.get_logger().info ('ainda tem caixa na frente, virando a direita')
+                    self.pub_cmd_vel.publish(cmd)
+                else:
+                    cmd.angular.z = 0.5
+                    self.pub_cmd_vel.publish(cmd)
+                    self.get_logger().info ('aaaaa, vou ficar tonto de tanto girar')
+
+            elif self.maq_estado == 2: #com caixas :o
+                    cmd.linear.x = 0.5
+                    self.pub_cmd_vel.publish(cmd)
+                    self.get_logger().debug ("Distância para o obstáculo" + str(self.distancia_frente))
                 
+                    if(self.dist <= 3 and self.dist >=1 and abs(self.erro_ang) <= 0.06):
+                        cmd.linear.x = 0.5
+                        self.pub_cmd_vel.publish(cmd)
+                        self.get_logger().info ('andandooo')
+                    elif (self.distancia_frente < self.distancia_direita and self.distancia_frente < self.distancia_esquerda or self.distancia_frente < 1):
+                        self.maq_estado = 0
+                    if(self.dist <= 0.8):
+                        cmd.angular.z = 0.0
+                        cmd.linear.x = 0.0
+                        self.pub_cmd_vel.publish(cmd)
+                        self.get_logger().info ('cheguei no 9,9')
+
         self.get_logger().info ('Ordenando o robô: "parar"')
         self.pub_cmd_vel.publish(self.parar)
         rclpy.spin_once(self)
@@ -93,7 +143,7 @@ class R2D2(Node):
     # Destrutor do nó
     def __del__(self):
         self.get_logger().info('Finalizando o nó! Tchau, tchau...')
-        
+
 # Função principal
 def main(args=None):
     rclpy.init(args=args)
@@ -106,4 +156,4 @@ def main(args=None):
         pass
    
 if __name__ == '__main__':
-    main()
+    main()  
