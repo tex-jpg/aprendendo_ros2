@@ -27,8 +27,12 @@ setup(
             'talker = meu_primeiro_pacote.talker:main',
             'listener = meu_primeiro_pacote.listener:main',
             'r2d2 = meu_primeiro_pacote.r2d2:main',
-            'r2d2_controle = meu_primeiro_pacote.r2d2_controle:main'
-            'wavefront = meu_primeiro_pacote.wavefront:main'
+            'r2d2_controle1 = meu_primeiro_pacote.r2d2_controle1:main',
+            'r2d2_controle = meu_primeiro_pacote.r2d2_controle:main',
+            'wavefront = meu_primeiro_pacote.wavefront:main',
+            'a_estrela = meu_primeiro_pacote.a_estrela:main',
+            'rtt = meu_primeiro_pacote.rtt:main',
+            'campos = meu_primeiro_pacote.campos:main'
 
         ],
     },
