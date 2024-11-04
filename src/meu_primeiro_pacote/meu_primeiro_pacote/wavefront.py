@@ -1,99 +1,87 @@
-from collections import deque
+import cv2
+import numpy as np
 from matplotlib import pyplot as plt
 
-# Tamanho da matriz
-linhas = 400
-colunas = 400
+# Função para aplicar o algoritmo Wavefront
+def wavefront(matrix, goal):
+    rows, cols = matrix.shape
+    wavefront_field = np.full((rows, cols), np.inf)  # Inicializa com infinito
+    wavefront_field[goal] = 2  # Objetivo marcado com valor 2
+    process_list = [goal]  # Lista de células a processar
 
-class Path:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]  # Movimentos permitidos
 
-#Pontos de inicio e fim
-x_inicio = 10
-y_inicio = 10
+    while process_list:
+        current = process_list.pop(0)
+        current_value = wavefront_field[current]
 
-x_final = 50
-y_final = 50
+        for direction in directions:
+            neighbor = (current[0] + direction[0], current[1] + direction[1])
 
-goal = (x_final, y_final)
-start = (x_inicio, y_inicio)
-path = [Path(start[0], start[1])]
+            # Verifica limites e se é um espaço livre
+            if (0 <= neighbor[0] < rows and 0 <= neighbor[1] < cols and matrix[neighbor] == 1):
+                if wavefront_field[neighbor] > current_value + 1:
+                    wavefront_field[neighbor] = current_value + 1
+                    process_list.append(neighbor)
 
-caminho_aberto = 1
-obstaculo = 0
+    return wavefront_field
 
-# Montando matrix do fafa
+# Carrega o mapa e converte para binário (0 = obstáculo, 1 = livre)
 pgmf = open('my_map.pgm', 'rb')
-matrix = plt.imread(pgmf)
+image = plt.imread(pgmf)
+pgmf.close()
+image_copia = 1.0 * (image > 250)
 
-matrix = (1.0 * (matrix > 220))
+goal = (250, 125)  # Define o objetivo
+robo = (350, 50)   # Define a posição inicial do robô
 
-# Inicializa a matriz com zeros
-matriz = [[0] * colunas for _ in range(linhas)]
-matriz_caminho = [[0] * colunas for _ in range(linhas)]
+# Executa o algoritmo Wavefront para criar o campo de proximidade
+wavefront_field = wavefront(image_copia, goal)
 
-matriz[x_final][y_final] = 2
-matriz[x_inicio][y_inicio] = 1
-
-# Fila para a busca em largura
-fila = deque([(x_final, y_final)])
-
-# Wavefront
-while fila:
-    x, y = fila.popleft()
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            i, j = x + dx, y + dy
-            if 0 <= i < linhas and 0 <= j < colunas and matriz[i][j] == 0:
-                matriz[i][j] = matriz[x][y] + 1
-                fila.append((i, j))
-            if (i, j) == (x_inicio, y_inicio):
-                fila.clear()  # Limpa a fila para encerrar o loop   
-                break  # Sai do loop for interno
-        else:
-            continue  # Continua o loop while sem executar o else
-        break  # Sai do loop for externo se o ponto inicial foi alcançado
-
-# Para garantir que a célula inicial permaneça com o valor 1
-matriz[x_final][y_final] = 2
-matriz[x_inicio][y_inicio] = 1
-
-x_atual, y_atual = x_inicio, y_inicio
-def menor_valor(x_atual, y_atual, x_final, y_final,matriz):
-    menor_valor = float('inf')
-    prox_x, prox_y = x_atual, y_atual
-    
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            novo_x = x_atual + dx
-            novo_y = y_atual + dy
-            if (dx, dy) != (0, 0) and 0 <= novo_x < linhas and 0 <= novo_y < colunas and matriz[novo_x][novo_y] > 0:  #and matrix{novo_x}[novo_y] == caminho_aberto
-                valor = matriz[novo_x][novo_y]
-                if valor < menor_valor:
-                    menor_valor = valor
-                    prox_x, prox_y = novo_x, novo_y
-                if (novo_x, novo_y) == (x_final, y_final):
-                    return novo_x, novo_y  # Return the goal coordinates directly
-    
-    return prox_x, prox_y
-
-
-matriz[x_inicio][y_inicio] = float('inf')
-while not(x_atual== x_final and y_atual == y_final):
-    pros_x,pros_y = menor_valor(x_atual, y_atual, x_final, y_final,matriz)
-    matriz_caminho[pros_x][pros_y] = "*"
-    x_atual = pros_x
-    y_atual = pros_y
-    path.append(Path(x_atual,y_atual))
-    
-    
-# Extract path coordinates ensuring they are within the matrix boundaries
-path_x = [min(max(cell.x, 0), linhas - 1) for cell in path]
-path_y = [min(max(cell.y, 0), colunas - 1) for cell in path]
-
-# Visualize the path
-plt.imshow(matrix, interpolation='nearest', cmap='gray') 
-plt.plot(path_y, path_x, color='yellow', linewidth=2)
+# Exibição do campo de proximidade
+plt.figure("Figura 2")
+plt.imshow(wavefront_field, cmap='viridis', interpolation='nearest')
+plt.colorbar(label="Distância do Objetivo")
+plt.title("Campo de Proximidade")
 plt.show()
+
+# Busca do menor caminho até o objetivo
+ponto_inicial = robo
+caminho = [list(robo)]
+menor = wavefront_field[robo[0]][robo[1]] + 1
+menor_posicao = ponto_inicial  # Inicializa menor_posicao com o ponto inicial do robô
+parar = False
+
+while True:
+    for l in range(1, -2, -1):
+        for c in range(1, -2, -1):
+            try:
+                valor = wavefront_field[ponto_inicial[0] + l][ponto_inicial[1] + c]
+                if 1 < valor < menor:
+                    menor = valor
+                    menor_posicao = (ponto_inicial[0] + l, ponto_inicial[1] + c)
+
+                if menor_posicao == goal:
+                    parar = True
+                    break
+            except IndexError:
+                continue
+        if parar:
+            break
+
+    ponto_inicial = menor_posicao
+    caminho.append(menor_posicao)
+
+    if parar:
+        break
+
+# Colorindo o caminho em vermelho
+image_com_caminho = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
+for pos in caminho:
+    image_com_caminho[pos[0], pos[1]] = [0, 0, 255]  # Pinta em vermelho
+
+# Exibe a imagem final com o caminho
+cv2.imshow('Caminho Encontrado', image_com_caminho)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
